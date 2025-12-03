@@ -8,6 +8,7 @@ import { WalletsService } from '../wallets/wallets.service';
 import { OrdersService } from '../orders/orders.service';
 import type { ResolveDisputeDto } from '../disputes/dto/resolve-dispute.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -292,4 +293,72 @@ export class AdminService {
     });
   }
 
+  async getAllUsers(page = 1, limit = 10, search = '') {
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.UserWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          status: true,
+          isSeller: true,
+          isVerified: true,
+          createdAt: true,
+          profilePicture: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data: users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async banUser(userId: string) {
+    // Cek dulu apakah user admin (jangan ban sesama admin)
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.role === 'ADMIN') {
+      throw new BadRequestException(
+        'Tidak dapat memblokir sesama Administrator',
+      );
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { status: 'banned' },
+    });
+  }
+
+  /**
+   * [Admin] Unban User (Kembalikan status jadi 'active')
+   */
+  async unbanUser(userId: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { status: 'active' },
+    });
+  }
 }

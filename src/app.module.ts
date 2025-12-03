@@ -16,6 +16,10 @@ import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { ChatsModule } from './chats/chats.module';
+import { TasksModule } from './tasks/tasks.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ReportsModule } from './reports/reports.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -23,6 +27,7 @@ import { ChatsModule } from './chats/chats.module';
       isGlobal: true,
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     ServicesModule,
@@ -35,6 +40,9 @@ import { ChatsModule } from './chats/chats.module';
     PrismaModule,
     WalletsModule,
     ChatsModule,
+    TasksModule,
+    ReportsModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

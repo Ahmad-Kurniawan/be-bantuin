@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -127,6 +128,41 @@ export class AdminController {
     return {
       success: true,
       data: history,
+  @Get('users')
+  async getAllUsers(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('q') search?: string,
+  ) {
+    const result = await this.adminService.getAllUsers(
+      Number(page) || 1,
+      Number(limit) || 10,
+      search || '',
+    );
+    return {
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    };
+  }
+
+  @Post('users/:id/ban')
+  @HttpCode(HttpStatus.OK)
+  async banUser(@Param('id') userId: string) {
+    await this.adminService.banUser(userId);
+    return {
+      success: true,
+      message: 'Pengguna berhasil diblokir (banned)',
+    };
+  }
+
+  @Post('users/:id/unban')
+  @HttpCode(HttpStatus.OK)
+  async unbanUser(@Param('id') userId: string) {
+    await this.adminService.unbanUser(userId);
+    return {
+      success: true,
+      message: 'Pengguna berhasil diaktifkan kembali',
     };
   }
 }
